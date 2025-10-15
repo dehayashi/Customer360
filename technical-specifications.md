@@ -1,110 +1,130 @@
-# Customer360 CRM Intelligence – Especificações Técnicas
+# Customer360 CRM Intelligence – Technical Specifications
 
-## 📘 1. Introdução
-Este documento descreve os requisitos técnicos, funcionais e não funcionais do projeto **Customer360 CRM Intelligence**, uma solução baseada em **Microsoft Dynamics 365 CRM** com integrações em **Azure**, **C#/.NET**, e **SQL Server**.
+## 📘 1. Introduction
+This document defines the **functional** and **non-functional requirements**, technical architecture, integrations, and testing strategy for the **Customer360 CRM Intelligence** project — a modern CRM solution built with **Microsoft Dynamics 365**, **C#/.NET**, **Azure Services**, and **SQL Server**.
 
-O objetivo é fornecer uma visão clara da arquitetura, das dependências e das práticas de desenvolvimento adotadas, assegurando escalabilidade, segurança e performance corporativa.
-
----
-
-## ⚙️ 2. Escopo do Sistema
-O sistema visa centralizar informações de clientes e operações comerciais, permitindo:
-- Integração entre CRM, ERP e sistemas externos;
-- Cálculo automático de métricas e indicadores de relacionamento;
-- Exposição de APIs seguras para aplicações externas;
-- Automação de fluxos de trabalho e orquestrações no Azure;
-- Monitoramento contínuo com dashboards Power BI.
+The goal is to demonstrate enterprise-level architecture and implementation practices aligned with scalability, performance, and security standards required for senior CRM developers.
 
 ---
 
-## 🧩 3. Requisitos Funcionais
-| ID | Descrição | Prioridade |
-|----|------------|-------------|
-| RF01 | Cadastrar e atualizar perfis de clientes no Dynamics 365 | Alta |
-| RF02 | Calcular *Engagement Score* com base em interações e vendas | Alta |
-| RF03 | Sincronizar dados entre CRM e ERP via Azure Logic Apps | Alta |
-| RF04 | Expor endpoints RESTful para consumo por sistemas externos | Alta |
-| RF05 | Registrar logs e métricas de uso via Application Insights | Média |
-| RF06 | Gerar dashboards Power BI com KPIs de relacionamento e conversão | Média |
-| RF07 | Permitir autenticação OAuth 2.0 / JWT na API | Alta |
+## ⚙️ 2. System Scope
+Customer360 CRM Intelligence is designed to unify customer data from multiple systems, enabling organizations to:
+- Integrate CRM, ERP, and third-party systems seamlessly;
+- Calculate key engagement metrics using Azure automation;
+- Provide secure and documented RESTful APIs;
+- Orchestrate processes using Azure Logic Apps and Functions;
+- Monitor KPIs in real time through Power BI dashboards.
 
 ---
 
-## 🧱 4. Requisitos Não Funcionais
-| Categoria | Descrição |
-|------------|------------|
-| **Desempenho** | O sistema deve processar 1.000 requisições simultâneas sem degradação perceptível. |
-| **Escalabilidade** | Os serviços devem ser escaláveis horizontalmente em ambiente Azure. |
-| **Segurança** | Todos os endpoints devem utilizar HTTPS e autenticação JWT. |
-| **Disponibilidade** | O sistema deve ter disponibilidade mínima de 99,5%. |
-| **Manutenibilidade** | Código deve seguir padrões SOLID e Clean Architecture. |
-| **Versionamento** | Todos os commits e branches devem ser controlados via Git Flow. |
-| **Monitoramento** | Logs e métricas devem ser enviados ao Azure Application Insights. |
+## 🧩 3. Functional Requirements
+| ID | Description | Priority |
+|----|-------------|-----------|
+| FR01 | Create and update customer profiles in Dynamics 365 | High |
+| FR02 | Compute *Engagement Score* based on activity and sales | High |
+| FR03 | Synchronize CRM and ERP data using Azure Logic Apps | High |
+| FR04 | Provide RESTful API endpoints for external systems | High |
+| FR05 | Log and monitor performance through Application Insights | Medium |
+| FR06 | Generate Power BI dashboards with KPIs and trends | Medium |
+| FR07 | Enable secure authentication (OAuth 2.0 / JWT) for API | High |
+| FR08 | Ensure compatibility with Dynamics 365 cloud and on-prem versions | Medium |
 
 ---
 
-## 🏗️ 5. Arquitetura Técnica
-A arquitetura é dividida em cinco camadas principais:
-
-1. **Dynamics 365 CRM** – Gestão central de entidades e workflows.
-2. **API RESTful (.NET 8)** – Exposição de endpoints e integração de dados.
-3. **Azure Functions / Logic Apps** – Automação e orquestração de fluxos.
-4. **SQL Server** – Armazenamento e análise de dados transacionais.
-5. **Power BI e Application Insights** – Visualização e observabilidade.
-
-Fluxos de dados são bidirecionais entre o CRM e as funções Azure, com monitoramento contínuo no Application Insights.
-
----
-
-## 🔐 6. Segurança e Conformidade
-- Implementação de **OAuth 2.0** para autenticação segura.
-- Armazenamento de senhas e chaves em **Azure Key Vault**.
-- Logs criptografados em repouso (TDE) e em trânsito (TLS 1.2+).
-- Aplicação de princípios de **Least Privilege** e **RBAC (Role-Based Access Control)**.
+## 🧱 4. Non-Functional Requirements
+| Category | Specification |
+|-----------|----------------|
+| **Performance** | Handle 1,000+ concurrent API requests with < 300ms latency. |
+| **Scalability** | Services must scale horizontally using Azure Functions and App Services. |
+| **Security** | Enforce HTTPS, OAuth 2.0, and encryption at rest and in transit. |
+| **Availability** | Minimum uptime of 99.5% via Azure redundancy. |
+| **Maintainability** | Follow SOLID, Clean Architecture, and code review standards. |
+| **Usability** | Ensure intuitive UI customization in Dynamics forms and views. |
+| **Compatibility** | Compatible with Microsoft Edge, Chrome, and Dynamics 365 v9+. |
+| **Monitoring** | Centralized logs and telemetry through Application Insights. |
 
 ---
 
-## 🧠 7. Integrações
-| Sistema | Tipo | Tecnologia |
-|----------|------|-------------|
-| ERP (SAP ou similar) | Bidirecional | Azure Logic Apps + API REST |
-| E-commerce | Unidirecional | Webhooks + Azure Function |
-| Helpdesk (Zendesk / Freshdesk) | Bidirecional | Service Bus + API |
-| Power BI | Leitura | SQL Server + DirectQuery |
+## 🏗️ 5. Technical Architecture
+Five main layers compose the architecture:
+
+1. **Dynamics 365 CRM** – Core data management and automation workflows.
+2. **.NET 8 RESTful API** – Secure API endpoints integrating data and business logic.
+3. **Azure Functions & Logic Apps** – Automation and data orchestration.
+4. **SQL Server** – Relational data layer and KPI computation.
+5. **Power BI & Application Insights** – Data visualization and observability.
+
+Data flows bidirectionally between Dynamics 365 and Azure components, ensuring continuous monitoring through Application Insights.
 
 ---
 
-## 🧪 8. Estratégia de Testes
-- **Testes Unitários:** XUnit (mínimo 80% de cobertura).  
-- **Testes de Integração:** Mock de APIs externas e banco de dados local.  
-- **Testes de Carga:** JMeter para simulação de uso intenso.  
-- **Testes de Segurança:** OWASP ZAP e varredura de vulnerabilidades Azure Defender.
+## 🔐 6. Security & Compliance
+- Authentication via **OAuth 2.0** and token-based authorization (JWT).
+- Secrets and keys stored in **Azure Key Vault**.
+- Data encryption at rest using **Transparent Data Encryption (TDE)**.
+- Role-based access control (RBAC) following least privilege principle.
+- Compliance with **GDPR** and **Microsoft Security Baseline**.
 
 ---
 
-## 🔄 9. Pipeline CI/CD
-- **CI:** Build e testes automáticos via GitHub Actions.  
-- **CD:** Deploy automatizado em Azure App Services e Functions.  
-- **Validação:** Revisões obrigatórias de PR e análise de código estático (SonarCloud).
+## 🧠 7. Integrations
+| System | Direction | Technology |
+|---------|------------|-------------|
+| ERP (SAP or similar) | Bidirectional | Azure Logic Apps + REST API |
+| E-commerce | Unidirectional | Webhooks + Azure Function |
+| Helpdesk (Zendesk / Freshdesk) | Bidirectional | Service Bus + REST API |
+| Power BI | Read-only | SQL Server + DirectQuery |
 
 ---
 
-## 📊 10. Métricas de Sucesso
-| Indicador | Meta |
-|------------|------|
-| Uptime do sistema | ≥ 99,5% |
-| Latência média da API | ≤ 300ms |
-| Cobertura de testes | ≥ 80% |
-| Tempo médio de sincronização CRM ↔ ERP | ≤ 2 min |
+## 🧪 8. Testing Strategy
+| Test Type | Tool | Objective |
+|------------|-------|------------|
+| Unit Tests | xUnit | Validate plugins and API components (≥ 80% coverage). |
+| Integration Tests | Postman / MSTest | Ensure data consistency across systems. |
+| Load Tests | JMeter | Simulate concurrent access and stress scenarios. |
+| UI Tests | Selenium | Validate custom CRM forms and workflows. |
+| Security Tests | OWASP ZAP / Azure Defender | Detect vulnerabilities and misconfigurations. |
+
+Automation pipeline integrates with GitHub Actions and Azure DevOps for continuous validation.
 
 ---
 
-## 📄 11. Documentação Complementar
-- `api-documentation.md`: especificação Swagger e endpoints.
-- `architecture-diagram.png`: diagrama visual da arquitetura.
-- `customer-engagement-dashboard.pbix`: dashboard Power BI.
+## 🔄 9. CI/CD Pipeline
+- **Continuous Integration (CI):** Build, lint, test, and static analysis (SonarCloud).
+- **Continuous Delivery (CD):** Deploy to Azure App Service and Azure Functions.
+- **Version Control:** Git Flow strategy with branch protections and pull request reviews.
+- **Environment Promotion:** Dev → QA → Production with approval gates.
 
 ---
 
-## 🧰 12. Conclusão
-O projeto **Customer360 CRM Intelligence** representa uma arquitetura moderna, escalável e segura, ideal para demonstrar competências de um **CRM Developer Sênior (Dynamics 365)**, incluindo integração com Azure, liderança técnica e visão sistêmica de negócios.
+## 📊 10. Success Metrics
+| Metric | Target |
+|---------|---------|
+| System uptime | ≥ 99.5% |
+| API latency | ≤ 300ms |
+| Test coverage | ≥ 80% |
+| CRM↔ERP sync latency | ≤ 2 minutes |
+| Mean Time to Recovery (MTTR) | ≤ 10 minutes |
+
+---
+
+## 🌐 11. Documentation & Deliverables
+- `README.md` – Project overview and setup guide.
+- `technical-specifications.md` – This document.
+- `api-documentation.md` – Swagger/OpenAPI specification.
+- `architecture-diagram.png` – Visual architecture overview.
+- `customer-engagement-dashboard.pbix` – Power BI dashboard.
+
+---
+
+## 🧩 12. Future Improvements
+- Integration with **AI models** to predict customer churn or engagement.
+- Use of **Power Automate** for extended workflow automation.
+- Incorporation of **Azure Synapse** for data lake analytics.
+- Addition of **DevSecOps** practices for proactive vulnerability detection.
+
+---
+
+## 🧰 13. Conclusion
+The **Customer360 CRM Intelligence** project delivers a secure, scalable, and data-driven CRM architecture demonstrating technical mastery in **Dynamics 365**, **Azure integration**, and **enterprise system design**. It is an ideal showcase for professional portfolios targeting senior Dynamics 365 CRM Developer roles.
