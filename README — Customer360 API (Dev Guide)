@@ -1,0 +1,252 @@
+# README — Customer360 API (Dev Guide)
+
+Este README cobre **execução local**, **variáveis de ambiente**, **troubleshooting** e **comandos úteis** para a API .NET do projeto Customer360.
+
+---
+
+## 📦 Pré-requisitos
+
+* **.NET SDK 8.0** (ou superior)
+* **SQL Server** (local ou container Docker)
+* **Azure Storage Emulator** (para Functions locais — opcional)
+* **Node.js** (apenas se for usar ferramentas de linting de contratos ou gerar clientes)
+
+---
+
+## 🔧 Configuração Rápida
+
+1. **Clone o repositório**
+
+```bash
+git clone https://github.com/<seu-usuario>/Customer360-CRM-Intelligence.git
+cd Customer360-CRM-Intelligence/src/API
+```
+
+2. **Crie `appsettings.Development.json`** (exemplo)
+
+```json
+{
+  "Logging": { "LogLevel": { "Default": "Information", "Microsoft.AspNetCore": "Warning" } },
+  "ConnectionStrings": {
+    "Sql": "Server=localhost,1433;Database=Customer360;User Id=sa;Password=Your_password123;TrustServerCertificate=true"
+  },
+  "Jwt": {
+    "Authority": "https://login.microsoftonline.com/<tenant-id>/v2.0",
+    "Audience": "api://customer360-dev"
+  },
+  "Cors": { "AllowedOrigins": ["http://localhost:5173", "http://localhost:4200"] }
+}
+```
+
+3. **Restaurar e executar**
+
+```bash
+# Na pasta src/API
+dotnet restore
+# Rodar migrações, se existir projeto de migrations:
+# dotnet ef database update
+
+# Executar
+dotnet run
+```
+
+4. **Acessar Swagger**
+
+```
+http://localhost:5000/swagger
+```
+
+> Porta pode variar; veja o console do `dotnet run`.
+
+---
+
+## 🔒 Variáveis de Ambiente (exemplos)
+
+| Nome                            | Descrição                                   |
+| ------------------------------- | ------------------------------------------- |
+| `ASPNETCORE_ENVIRONMENT`        | Ambiente (Development, Staging, Production) |
+| `ConnectionStrings__Sql`        | String de conexão do SQL Server             |
+| `Jwt__Authority`                | URL do emissor (Azure AD / Entra ID)        |
+| `Jwt__Audience`                 | Identificador do recurso registrado         |
+| `AppInsights__ConnectionString` | Connection string do Application Insights   |
+| `Cors__AllowedOrigins__0`       | Primeiro domínio permitido no CORS          |
+
+> Observação: **`__`** (duplo underscore) representa hierarquia de chaves no .NET.
+
+---
+
+## 🧪 Testes
+
+```bash
+# Na raiz do repositório
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+* Cobertura mínima sugerida: **≥ 80%**
+* Publicar relatórios com **Coverlet + ReportGenerator** (opcional)
+
+---
+
+## 🐳 Usando Docker (opcional)
+
+### SQL Server via Docker
+
+```bash
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Your_password123" \
+  -p 1433:1433 --name sqlserver -d mcr.microsoft.com/mssql/server:2022-latest
+```
+
+### API via Dockerfile
+
+```bash
+# Build e run
+docker build -t customer360-api:dev .
+docker run -p 5000:8080 --env-file .env customer360-api:dev
+```
+
+Exemplo `.env`:
+
+```
+ASPNETCORE_ENVIRONMENT=Development
+ConnectionStrings__Sql=Server=host.docker.internal,1433;Database=Customer360;User Id=sa;Password=Your_password123;TrustServerCertificate=true
+Jwt__Authority=https://login.microsoftonline.com/<tenant-id>/v2.0
+Jwt__Audience=api://customer360-dev
+```
+
+---
+
+## 🧰 Troubleshooting
+
+* **Erro de certificado no SQL (SSL/TLS):** adicione `TrustServerCertificate=true` na string de conexão (ambiente local apenas).
+* **401/403 em endpoints:** verifique `Jwt:Authority` e `Jwt:Audience`, e se o token contém os `scopes` corretos.
+* **CORS bloqueando requisições:** inclua o domínio do front-end em `Cors:AllowedOrigins` ou defina vars de ambiente.
+* **Swagger não carrega:** confirme a URL base e a porta; cheque logs de inicialização.
+
+---
+
+## 🗺️ Convenções de Branching
+
+* **main** → Produção
+* **develop** → Pré-produção / QA
+* **feature/***, **hotfix/***, **release/*** → Fluxo Git Flow
+
+---
+
+## 🔁 Versionamento e Releases
+
+* Tags semânticas: `v1.0.0`, `v1.1.0`, `v1.1.1`
+* Changelogs por release (GitHub Releases)
+
+---
+
+# CI/CD — GitHub Actions (Templates)
+
+Crie o arquivo em: `.github/workflows/api-ci-cd.yml`
+
+```yaml
+name: API CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore ./src/API/API.csproj
+
+      - name: Build
+        run: dotnet build ./src/API/API.csproj --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test ./tests --configuration Release --no-build --collect:"XPlat Code Coverage"
+
+      - name: Publish
+        run: dotnet publish ./src/API/API.csproj -c Release -o ./publish
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-publish
+          path: ./publish
+
+  deploy-dev:
+    if: github.ref == 'refs/heads/develop'
+    needs: build-test
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: api-publish
+          path: ./publish
+
+      - name: Deploy to Azure Web App (Dev)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME_DEV }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_DEV }}
+          package: ./publish
+
+  deploy-prod:
+    if: github.ref == 'refs/heads/main'
+    needs: build-test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: api-publish
+          path: ./publish
+
+      - name: Deploy to Azure Web App (Prod)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME_PROD }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_PROD }}
+          package: ./publish
+```
+
+---
+
+## 🔐 Secrets necessários no GitHub
+
+* `AZURE_WEBAPP_NAME_DEV` — Nome do App Service (dev)
+* `AZURE_WEBAPP_PUBLISH_PROFILE_DEV` — Publish Profile (XML) do App Service dev
+* `AZURE_WEBAPP_NAME_PROD` — Nome do App Service (prod)
+* `AZURE_WEBAPP_PUBLISH_PROFILE_PROD` — Publish Profile (XML) do App Service prod
+* (opcional) `APPINSIGHTS_CONNECTION_STRING`, `SQL_CONNECTION_STRING`, `JWT_AUTHORITY`, `JWT_AUDIENCE`
+
+> Dica: use **Action Variables** para valores não sensíveis (p.ex. `ASPNETCORE_ENVIRONMENT`).
+
+---
+
+## ✅ Checklist de Deploy
+
+* [ ] Publish Profiles importados como **secrets**
+* [ ] Variáveis de ambiente configuradas no App Service
+* [ ] Slot de **Staging** criado (opcional) para *swap* sem downtime
+* [ ] Alertas do **Application Insights** habilitados
+* [ ] Backups automáticos do **SQL Server** ativos
+
+---
+
+## 📚 Referências Rápidas
+
+* ASP.NET Core Configuration: [https://learn.microsoft.com/aspnet/core/fundamentals/configuration](https://learn.microsoft.com/aspnet/core/fundamentals/configuration)
+* Azure Web Apps Deploy Action: [https://github.com/Azure/webapps-deploy](https://github.com/Azure/webapps-deploy)
+* OpenAPI/Swagger: [https://swagger.io/specification/](https://swagger.io/specification/)
